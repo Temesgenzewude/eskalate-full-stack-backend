@@ -1,98 +1,153 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+## Eskalate Full-Stack Backend
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+### Overview
+Backend API built with NestJS to power the Eskalate full‑stack assessment. It exposes REST endpoints to manage Restaurants and Foods with full CRUD, request validation, clear error handling, and a layered architecture separating persistence documents, domain entities, and response transfer objects (RTOs).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+### Tech Stack
+- **Runtime/Language**: Node.js (ESM), TypeScript
+- **Framework**: NestJS 11
+- **Database**: MongoDB with Mongoose
+- **Validation**: class-validator, class-transformer
+- **Configuration**: @nestjs/config
+- **Dev tooling**: ESLint 9, Prettier, Jest (scaffolded), pnpm
 
-## Description
+### Key Features
+- **RESTful CRUD** for Restaurants and Foods
+  - Create, Read (list + by id), Update, Delete
+  - Filter foods by `restaurantId`
+- **Clear endpoint naming** with global prefix `/api`
+- **Validation & Transformation** using DTOs and Nest global `ValidationPipe`
+- **Consistent error handling** with HTTP status codes and meaningful messages
+- **Layered models**
+  - Mongoose schemas (documents) for persistence
+  - Entities built from documents (domain shape)
+  - RTOs built from entities (response shape)
+- **ESM/NodeNext** module resolution with explicit `.js` extensions in local imports
+- **CORS enabled** for frontend integration
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+### Project Structure
 
-## Project setup
-
-```bash
-$ pnpm install
+```
+src/
+  app.module.ts
+  main.ts
+  common/
+    dtos/
+      food/
+        create-food.dto.ts
+        update-food.dto.ts
+      restaurant/
+        create-restaurant.dto.ts
+        update-restaurant.dto.ts
+    entities/
+      food/food.entity.ts
+      restaurant/restaurant.entity.ts
+    models/
+      food/food.schema.ts
+      resturant/restaurant.schema.ts
+    pipes/
+      parse-objectid.pipe.ts
+  foods/
+    foods.module.ts
+    foods.service.ts
+    foods.controller.ts
+  restaurants/
+    restaurants.module.ts
+    restaurants.service.ts
+    restaurants.controller.ts
 ```
 
-## Compile and run the project
+### Architecture
+- **Mongoose Schemas (Documents)**: Define persistence shape and constraints. Example: `Food` and `Restaurant` schemas in `src/common/models/...`.
+- **Entities**: Domain objects created from documents via `fromDocument` methods. They normalize IDs and select only fields the domain needs.
+- **RTOs**: Output models created from entities via `fromEntity`/`fromEntities`, ensuring the API response is stable and decoupled from persistence and domain layers.
+- **DTOs**: Request models with validation rules; used by controllers to validate payloads.
+- **Services**: Application logic. Return entities (never raw documents) by mapping documents to entities.
+- **Controllers**: HTTP layer. Map entities to RTOs before responding.
 
-```bash
-# development
-$ pnpm run start
+### API Endpoints
 
-# watch mode
-$ pnpm run start:dev
+Base URL: `/api`
 
-# production mode
-$ pnpm run start:prod
+- **Restaurants**
+  - `GET /restaurants` → list restaurants
+  - `POST /restaurants` → create restaurant
+  - `GET /restaurants/:id` → get by id
+  - `PUT /restaurants/:id` → update by id
+  - `DELETE /restaurants/:id` → remove by id
+
+- **Foods**
+  - `GET /foods` → list foods (supports `?restaurantId=<id>`)
+  - `POST /foods` → create food
+  - `GET /foods/:id` → get by id
+  - `PUT /foods/:id` → update by id
+  - `DELETE /foods/:id` → remove by id
+
+### Request/Response Models
+
+- **DTOs** (requests)
+  - `CreateRestaurantDto`: `{ name: string; address?: string }`
+  - `UpdateRestaurantDto`: all fields optional
+  - `CreateFoodDto`: `{ name: string; price: number; restaurantId: string; description?: string }`
+  - `UpdateFoodDto`: all fields optional
+
+- **RTOs** (responses)
+  - `RestaurantRto`: `{ id: string; name: string; address?: string }`
+  - `FoodRto`: `{ id: string; name: string; price: number; restaurantId: string; description?: string }`
+
+### Validation & Error Handling
+- Global `ValidationPipe` with `transform`, `whitelist`, and `forbidNonWhitelisted` is enabled.
+- Path parameters expecting MongoDB ObjectId use `ParseObjectIdPipe` which throws `400 Bad Request` on invalid IDs.
+- Not found resources return `404` with descriptive messages.
+
+### Configuration
+- Environment variables are loaded via `@nestjs/config`.
+- Required variables:
+  - `MONGODB_URI` (e.g., `mongodb://127.0.0.1:27017/eskalate`)
+  - `PORT` (default: 3000)
+- If `MONGODB_URI` is not set, configure it in a local `.env` file in the project root.
+
+Example `.env`:
+
+```
+MONGODB_URI=mongodb://127.0.0.1:27017/eskalate
+PORT=3000
 ```
 
-## Run tests
+### Scripts
+- **Install**: `pnpm install`
+- **Start (dev)**: `pnpm run start:dev`
+- **Start (prod)**: `pnpm run start:prod`
+- **Build**: `pnpm run build`
+- **Lint**: `pnpm run lint`
+- **Test (unit)**: `pnpm run test`
+- **Test (e2e)**: `pnpm run test:e2e`
 
-```bash
-# unit tests
-$ pnpm run test
+### Local Development
+1. Ensure MongoDB is running locally or have a connection string (e.g., MongoDB Atlas).
+2. Create `.env` with `MONGODB_URI` and `PORT`.
+3. Run `pnpm install`.
+4. Start dev server: `pnpm run start:dev`.
+5. The API will be available at `http://localhost:3000/api`.
 
-# e2e tests
-$ pnpm run test:e2e
+### Packages Used
+- `@nestjs/common`, `@nestjs/core`, `@nestjs/platform-express`
+- `@nestjs/mongoose`, `mongoose`
+- `@nestjs/config`
+- `class-validator`, `class-transformer`
+- `@nestjs/mapped-types`
+- Tooling: `eslint`, `prettier`, `jest`, `ts-jest`, `ts-node`, `tsconfig-paths`
 
-# test coverage
-$ pnpm run test:cov
-```
+### Design Decisions
+- **ESM/NodeNext**: The project uses `module: nodenext`. All local relative imports include `.js` extensions to support NodeNext resolution in both TS and emitted JS.
+- **Domain separation**: Controllers never return raw MongoDB documents. Services return domain entities; controllers map them to RTOs for responses.
+- **Extensibility**: Adding new features follows the same pattern: schema (document) → entity → RTO + DTOs → service → controller.
 
-## Deployment
+### Future Improvements
+- API documentation with Swagger (OpenAPI)
+- Database migrations/seed scripts
+- Pagination, sorting, and search for listing endpoints
+- Integration tests targeting the controllers and services
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### License
+MIT (project scaffolding based on NestJS). 
